@@ -3,6 +3,8 @@ from typing import Any, Union
 
 import pandas as pd
 import yfinance as yf
+import sqlite3
+from ast import literal_eval
 from pandas import DataFrame, Series
 from pandas.io.parsers import TextFileReader
 
@@ -37,17 +39,44 @@ def download_base_dados():
 
     # Download de todoas as ações da lista, a partir do ponto que já existe no HD
 
-    try:
-        historico = pd.read_csv('./data/base_bovespa.csv')
-        # Reconstruir o dataset com multi-index, indexado por data
-    except FileNotFoundError:
-        data = yf.download(acoes)
+    conn = sqlite3.connect("./data/historico_bovespa.db")
+    hist = pd.read_sql_query("SELECT * FROM HIST", conn)
+    # Reconstrói o dataset com Date como index, e colunas multi-index com tuplas
+    hist.set_index('Date', drop=True, inplace=True)
+    hist.index = pd.to_datetime(hist.index)
+    hist.columns = list(map(literal_eval, hist.columns))
+    hist.columns = pd.MultiIndex.from_tuples(hist.columns)
+    print("Últimos registros no banco de dados")
+    print(hist.tail())
+    ultima = hist.index[-1]
 
+    inicio = pd.to_datetime(1, unit='D', origin=ultima)
+    inicio = str(inicio).rstrip('00:00:00').rstrip()
+    print('Download de dados do Yahoo Finance:')
+    data = yf.download(acoes, start=inicio)
+    print('Download de dados concluído com sucesso.')
     # Reordenando os níveis de índice nas colunas
     data.columns = data.columns.reorder_levels([1, 0])
-
+#    data.set_index('Date', drop=True, inplace=True)
+#    data.index = pd.to_datetime(hist.index)
     # Ordenando as colunas em ordem alfabética
     data.sort_index(axis=1, inplace=True)
 
+    print("Novos dados")
+    print(data.head())
+
+    hist = pd.concat([hist, data])
+
+    '''
+    Desafio para amanhã: acrescentar o dataframe data ao histórico no banco de dados SQL.
+    Aparentemente não tem como sobrescrever a tabela hist existente.
+    Melhoria possível: selecionar somente o índice da última coluna sem carregar o dataset inteiro.
+    '''
+#    hist.to_sql('hist', conn)
+#    conn.close()
+
+    print("Dados atualizados com sucesso. Últimos registros no banco de dados")
+    print(hist.tail(10))
+
     # Salvando em um arquivo .csv
-    data.to_csv('./data/base_bovespa.csv')
+#    data.to_csv('./data/base_bovespa.csv')
