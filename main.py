@@ -14,7 +14,7 @@ while True:
 
     opcao = int(input('Digite a opção desejada: '))
     if opcao == 1:
-        download_base_dados()
+        atualiza_base_dados()
     elif opcao == 2:
         break
     elif opcao == 99:
