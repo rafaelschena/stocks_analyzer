@@ -1,3 +1,4 @@
 data/
-09 - Banco de dados SQLite.ipynb
+*.ipynb
 debug.log
+*.html
