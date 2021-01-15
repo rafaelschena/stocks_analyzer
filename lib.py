@@ -108,6 +108,7 @@ def carrega_base_dados():
     hist.columns = pd.MultiIndex.from_tuples(hist.columns)
     return hist
 
+'''
 def desenha_grafico(ticker):
     from bokeh.plotting import figure, output_file, show
     from math import pi
@@ -126,5 +127,45 @@ def desenha_grafico(ticker):
     p.vbar(df.index[dec], w, df.Open[dec], df.Close[dec], fill_color="#FF0000", line_color="black")
 
     output_file(f'{ticker}.html', title=f'{ticker} Diário')
+
+    show(p)  # open a browser
+'''
+
+def desenha_grafico(ticker):
+    from bokeh.plotting import figure, output_file, show, ColumnDataSource
+    from bokeh.models import HoverTool
+    from math import pi
+
+    TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
+
+    p = figure(x_axis_type="datetime", tools=TOOLS, plot_width=1000, title=f"Gráfico de {ticker} Diário")
+    p.xaxis.major_label_orientation = pi / 4
+    p.grid.grid_line_alpha = 0.3
+    hist = carrega_base_dados()
+    df = hist[ticker].iloc[-250:]
+
+    # Create a ColumnDataSource from df: source
+    source = ColumnDataSource(df)
+
+    inc = df[df.Close > df.Open]
+    dec = df[df.Open > df.Close]
+    w = 12 * 60 * 60 * 1000  # half day in ms
+    p.segment(x0="Date", y0="High", x1="Date", y1="Low", color="black", source=source)
+    p.vbar(x="Date", width=w, top="Close", bottom="Open", fill_color="#00FF00", line_color="black", source=inc)
+    p.vbar(x="Date", width=w, top="Open", bottom="Close", fill_color="#FF0000", line_color="black", source=dec)
+
+    # min250 = petr3.Low.min()
+    # suporte = np.full((250,), min250)
+    # max250 = petr3.High.max()
+    # resist = pd.Series(np.full((250,), max250), index=petr3.index)
+    # p.line(resist.index, resist, line_color='green', line_width=2)
+    # p.line(suporte.index, suporte, line_color='red', line_width=2)
+
+    output_file(f'{ticker}.html', title=f'{ticker} Diário')
+
+    p.add_tools(HoverTool(
+        tooltips=[("Data", "@Date{%F}"), ("Abertura", "@Open"), ("Fechamento", "@Close"), ("Máxima", "@High"),
+                  ("Mínima", "@Low")],
+        formatters={'@Date': 'datetime'}))
 
     show(p)  # open a browser
