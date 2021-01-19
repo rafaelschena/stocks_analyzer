@@ -27,10 +27,9 @@ the_end()
 
 '''
 Melhorias a serem feitas:
-    - criar um csv com os ativos que fazem parte do escopo da análise para serem carregados
+
     - verificar consistência dos ativos do banco de dados com os da lista csv inicial, e caso falte algum, atualizar
     - atualizar o banco com novos ativos que nunca foram baixados
-    - caso já exista linha do dia da atualização está dando o seguinte erro: start date cannot be after end date. startDate = 1611111600, endDate = 1611025200
     - testar o comportamento da função caso o banco de dados exista, mas esteja vazio.
     - corrigir escalas da função desenha_grafico
     - plotar linhas horizontais de suporte e resistência principais

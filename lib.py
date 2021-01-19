@@ -61,16 +61,8 @@ def atualiza_base_dados():
         print('Download de dados concluído com sucesso.')
     else:
         f.close()
+
         # Download de todoas as ações da lista, a partir do ponto que já existe no HD
-
-#        conn = sqlite3.connect("./data/historico_bovespa.db")
-#        hist = pd.read_sql_query("SELECT * FROM HIST", conn)
-
-        # Reconstrói o dataset com Date como index, e colunas multi-index com tuplas
-#        hist.set_index('Date', drop=True, inplace=True)
-#        hist.index = pd.to_datetime(hist.index)
-#        hist.columns = list(map(literal_eval, hist.columns))
-#        hist.columns = pd.MultiIndex.from_tuples(hist.columns)
         hist = carrega_base_dados()
         print("Últimos registros no banco de dados")
         print(hist.tail())
@@ -78,26 +70,30 @@ def atualiza_base_dados():
 
         inicio = pd.to_datetime(1, unit='D', origin=ultima)
         inicio = str(inicio)[0:10]
-        print(f'Banco de dados atualizado até {str(ultima)[0:10]}. Baixando dados até {ontem}.')
-        print('Download de dados do Yahoo Finance:')
-        new_data = yf.download(acoes, start=inicio, end=today)
-        print('Download de dados concluído com sucesso.')
 
-    # Reordenando os níveis de índice nas colunas
-    new_data.columns = new_data.columns.reorder_levels([1, 0])
+        print(f'Banco de dados atualizado até {str(ultima)[0:10]}.')
+        if(pd.to_datetime(inicio) < pd.to_datetime(today)):
+            print(f'Baixando dados até {ultima}.')
+            print('Download de dados do Yahoo Finance:')
+            new_data = yf.download(acoes, start=inicio, end=today)
+            print('Download de dados concluído com sucesso.')
 
-    # Ordenando as colunas em ordem alfabética
-    new_data.sort_index(axis=1, inplace=True)
+            # Reordenando os níveis de índice nas colunas
+            new_data.columns = new_data.columns.reorder_levels([1, 0])
 
-    print("Novos dados")
-    print(new_data.head())
+            # Ordenando as colunas em ordem alfabética
+            new_data.sort_index(axis=1, inplace=True)
 
+            print("Novos dados")
+            print(new_data.head())
 
-    conn = sqlite3.connect("./data/historico_bovespa.db")
-    new_data.to_sql('hist', conn, if_exists="append")
-    print("Dados atualizados com sucesso. Últimos registros no banco de dados")
-    print(pd.read_sql_query("SELECT * FROM hist ORDER BY Date DESC LIMIT 10", conn))
-    conn.close()
+            conn = sqlite3.connect("./data/historico_bovespa.db")
+            new_data.to_sql('hist', conn, if_exists="append")
+            print("Dados atualizados com sucesso. Últimos registros no banco de dados")
+            print(pd.read_sql_query("SELECT * FROM hist ORDER BY Date DESC LIMIT 10", conn))
+            conn.close()
+        else:
+            print('Não há necessidade de atualização.')
 
 def carrega_base_dados():
     conn = sqlite3.connect("./data/historico_bovespa.db")
