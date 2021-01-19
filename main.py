@@ -30,9 +30,10 @@ the_end()
 
 '''
 Melhorias a serem feitas:
-
+    - escrever função para formatar os dados com multi-index
+    - escrever função para gravar dados no banco de dados
+    - verificar se um ativo já está na lista de downloads antes de incluir novamente
     - verificar consistência dos ativos do banco de dados com os da lista csv inicial, e caso falte algum, atualizar
-    - atualizar o banco com novos ativos que nunca foram baixados
     - testar o comportamento da função caso o banco de dados exista, mas esteja vazio.
     - corrigir escalas da função desenha_grafico
     - plotar linhas horizontais de suporte e resistência principais
