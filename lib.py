@@ -22,6 +22,8 @@ def the_end():
     print('#################################################################')
     print('')
 
+
+
 def atualiza_base_dados():
     '''
     Faz o download da lista de ações a serem importadas do Índice Brasil Amplo (ações com maior liquidez)
@@ -29,17 +31,17 @@ def atualiza_base_dados():
 
     :return:
     '''
-    ibra = pd.read_csv("./data/IBrA.csv", delimiter=';')
 
-    # Alterando nome das colunas para evitar erros por acentuação
-    ibra.columns = ['Codigo', 'Empresa', 'Tipo', 'Qtd_Teorica', 'Part']
+    # Extraindo os códigos das ações da lista
+    # Pressupõe que haja um arquivo acoes.csv com o exato código do Yahoo Finance
+    acoes = pd.read_csv('./data/acoes.csv', names=['Codigo'])
+    acoes = list(acoes.Codigo)
 
-    # Extraindo os códigos das ações da lista e acrescentando .SA a todos os símbolos para poder fazer o download
-    acoes = ibra.Codigo
-    acoes = [i + '.SA' for i in acoes]
+    # Acrescenta .SA a todos os símbolos para poder fazer o download
+#    acoes = [i + '.SA' for i in acoes]
 
     NoHist = False
-#    f = None
+
     try:
         f = open("./data/historico_bovespa.db")
     except FileNotFoundError:
@@ -53,7 +55,7 @@ def atualiza_base_dados():
 
     if(NoHist):
         print("Não existe ainda um banco de dados.")
-        conn = sqlite3.connect("./data/historico_bovespa.db")
+#        conn = sqlite3.connect("./data/historico_bovespa.db")
         print('Download de dados do Yahoo Finance:')
         new_data = yf.download(acoes, end=today) # Início será no primeiro dia disponível na API
         print('Download de dados concluído com sucesso.')
@@ -108,28 +110,6 @@ def carrega_base_dados():
     hist.columns = pd.MultiIndex.from_tuples(hist.columns)
     return hist
 
-'''
-def desenha_grafico(ticker):
-    from bokeh.plotting import figure, output_file, show
-    from math import pi
-
-    TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
-    p = figure(x_axis_type="datetime", tools=TOOLS, plot_width=1000, title=f"Gráfico {ticker} Diário")
-    p.xaxis.major_label_orientation = pi / 4
-    p.grid.grid_line_alpha = 0.3
-    hist = carrega_base_dados()
-    df = hist[ticker].iloc[-250:]
-    inc = df.Close > df.Open
-    dec = df.Open > df.Close
-    w = 12 * 60 * 60 * 1000  # half day in ms
-    p.segment(df.index, df.High, df.index, df.Low, color="black")
-    p.vbar(df.index[inc], w, df.Open[inc], df.Close[inc], fill_color="#00FF00", line_color="black")
-    p.vbar(df.index[dec], w, df.Open[dec], df.Close[dec], fill_color="#FF0000", line_color="black")
-
-    output_file(f'{ticker}.html', title=f'{ticker} Diário')
-
-    show(p)  # open a browser
-'''
 
 def desenha_grafico(ticker):
     from bokeh.plotting import figure, output_file, show, ColumnDataSource
@@ -143,7 +123,7 @@ def desenha_grafico(ticker):
     p.grid.grid_line_alpha = 0.3
     hist = carrega_base_dados()
     df = hist[ticker].iloc[-250:]
-
+#    df = hist[ticker]
     # Create a ColumnDataSource from df: source
     source = ColumnDataSource(df)
 
