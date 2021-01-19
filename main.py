@@ -11,7 +11,8 @@ while True:
     print('=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=')
     print('Digite uma opção:')
     print('1 - Atualizar base de dados')
-    print('2 - Exibir gráfico')
+    print('2 - Incluir ativo na base de dados')
+    print('3 - Exibir gráfico')
     print('99 - Sair do sistema')
     print('=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=')
 
@@ -19,6 +20,8 @@ while True:
     if opcao == 1:
         atualiza_base_dados()
     elif opcao == 2:
+        inclui_ativo(input('Digite o ativo:').upper())
+    elif opcao == 3:
         desenha_grafico(input('Digite o ativo:').upper())
     elif opcao == 99:
         break
