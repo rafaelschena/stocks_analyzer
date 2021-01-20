@@ -30,14 +30,53 @@ def atualiza_base_dados():
     Pressupõe que haja um arquivo acoes.csv com o exato código do Yahoo Finance
     :return:
     '''
-
     # Extraindo os códigos das ações da lista
     # Pressupõe que haja um arquivo acoes.csv com o exato código do Yahoo Finance
     acoes = pd.read_csv('./data/acoes.csv', names=['Codigo'])
     acoes = list(acoes.Codigo)
 
-    # Acrescenta .SA a todos os símbolos para poder fazer o download
-#    acoes = [i + '.SA' for i in acoes]
+    # Definindo o dia de hoje como o término do período de download
+    today = pd.datetime.today()
+#    ontem = pd.to_datetime(-1, unit='D', origin=today)
+    today = str(today)[0:10]
+#    ontem = str(ontem)[0:10]
+
+    db_valido = verifica_banco_dados()
+
+    if db_valido:
+        hist = carrega_base_dados()
+        print("Últimos registros no banco de dados")
+        print(hist.tail())
+        ultima = hist.index[-1]
+        inicio = pd.to_datetime(1, unit='D', origin=ultima)
+        inicio = str(inicio)[0:10]
+        print(f'Banco de dados atualizado até {str(ultima)[0:10]}.')
+
+        if (pd.to_datetime(inicio) < pd.to_datetime(today)):
+            print(f'Baixando dados até {today}.')
+            print('Download de dados do Yahoo Finance:')
+            new_data = yf.download(acoes, start=inicio, end=today)
+            print('Download de dados concluído com sucesso.')
+            # Reordenando os níveis de índice nas colunas
+            new_data.columns = new_data.columns.reorder_levels([1, 0])
+            # Ordenando as colunas em ordem alfabética
+            new_data.sort_index(axis=1, inplace=True)
+
+            print("Novos dados a serem gravados:")
+            print(new_data.tail())
+            grava_banco_dados(new_data)
+#            print("Últimos registros no banco de dados:")
+#            print(pd.read_sql_query("SELECT * FROM hist ORDER BY Date DESC LIMIT 10", conn))
+
+        else:
+            print('Banco de dados já está atualizado.')
+
+    else:
+        cria_banco_dados("replace")
+
+
+    ###################################################################
+####### Verifica o banco de dados, se não houver, cria um
 
     NoHist = False
 
@@ -45,12 +84,6 @@ def atualiza_base_dados():
         f = open("./data/historico_bovespa.db")
     except FileNotFoundError:
         NoHist = True
-
-    # Definindo o dia de hoje como o término do período de download
-    today = pd.datetime.today()
-    ontem = pd.to_datetime(-1, unit='D', origin=today)
-    today = str(today)[0:10]
-    ontem = str(ontem)[0:10]
 
     if(NoHist):
         print("Não existe ainda um banco de dados.")
@@ -65,56 +98,99 @@ def atualiza_base_dados():
 
         # Download de todoas as ações da lista, a partir do ponto que já existe no HD
         hist = carrega_base_dados()
+###################################################################################
 
-        if(type(hist)==pd.core.frame.DataFrame):
-            print("Últimos registros no banco de dados")
-            print(hist.tail())
-            ultima = hist.index[-1]
-            inicio = pd.to_datetime(1, unit='D', origin=ultima)
-            inicio = str(inicio)[0:10]
-            print(f'Banco de dados atualizado até {str(ultima)[0:10]}.')
+###################################################################################
+########### Se é um dataframe prossegue
 
-            if (pd.to_datetime(inicio) < pd.to_datetime(today)):
-                print(f'Baixando dados até {today}.')
-                print('Download de dados do Yahoo Finance:')
-                new_data = yf.download(acoes, start=inicio, end=today)
-                print('Download de dados concluído com sucesso.')
-                # Reordenando os níveis de índice nas colunas
-                new_data.columns = new_data.columns.reorder_levels([1, 0])
-                # Ordenando as colunas em ordem alfabética
-                new_data.sort_index(axis=1, inplace=True)
+#        if(type(hist)==pd.core.frame.DataFrame):
+#            print("Últimos registros no banco de dados")
+#            print(hist.tail())
+#            ultima = hist.index[-1]
+#            inicio = pd.to_datetime(1, unit='D', origin=ultima)
+#            inicio = str(inicio)[0:10]
+ #           print(f'Banco de dados atualizado até {str(ultima)[0:10]}.')
+#
+ #           if (pd.to_datetime(inicio) < pd.to_datetime(today)):
+  #              print(f'Baixando dados até {today}.')
+   #             print('Download de dados do Yahoo Finance:')
+    #            new_data = yf.download(acoes, start=inicio, end=today)
+     #           print('Download de dados concluído com sucesso.')
+      #          # Reordenando os níveis de índice nas colunas
+       #         new_data.columns = new_data.columns.reorder_levels([1, 0])
+        #        # Ordenando as colunas em ordem alfabética
+         #       new_data.sort_index(axis=1, inplace=True)
 
-                print("Novos dados")
-                print(new_data.head())
+#                print("Novos dados")
+ #               print(new_data.head())
 
-                conn = sqlite3.connect("./data/historico_bovespa.db")
-                new_data.to_sql('hist', conn, if_exists="append")
-                print("Dados atualizados com sucesso. Últimos registros no banco de dados")
-                print(pd.read_sql_query("SELECT * FROM hist ORDER BY Date DESC LIMIT 10", conn))
-                conn.close()
+  #              conn = sqlite3.connect("./data/historico_bovespa.db")
+   #             new_data.to_sql('hist', conn, if_exists="append")
+    #            print("Dados atualizados com sucesso. Últimos registros no banco de dados")
+     #           print(pd.read_sql_query("SELECT * FROM hist ORDER BY Date DESC LIMIT 10", conn))
+      #          conn.close()
+       #     else:
+        #        print('Não há necessidade de atualização.')
+
+
+        #else:
+### Se não é um dataframe reconstrói a base de dados
+#            print(f'Baixando dados até {today}.')
+#            print('Download de dados do Yahoo Finance:')
+#            new_data = yf.download(acoes, end=today)
+#            print('Download de dados concluído com sucesso.')
+#            # Reordenando os níveis de índice nas colunas
+#            new_data.columns = new_data.columns.reorder_levels([1, 0])
+#            # Ordenando as colunas em ordem alfabética
+#            new_data.sort_index(axis=1, inplace=True)
+
+#            print("Novos dados")
+#            print(new_data.head())
+
+#            conn = sqlite3.connect("./data/historico_bovespa.db")
+#            new_data.to_sql('hist', conn, if_exists="append")
+#            print("Dados atualizados com sucesso. Últimos registros no banco de dados")
+#            print(pd.read_sql_query("SELECT * FROM hist ORDER BY Date DESC LIMIT 10", conn))
+#            conn.close()
+
+def cria_banco_dados(se_existente="append"):
+    # Criação do banco de dados com o dia de hoje como o término do período de download
+    today = pd.datetime.today()
+    today = str(today)[0:10]
+    acoes = pd.read_csv('./data/acoes.csv', names=['Codigo'])
+    acoes = list(acoes.Codigo)
+    print('Download de dados do Yahoo Finance:')
+    new_data = yf.download(acoes, end=today)  # Início será no primeiro dia disponível na API
+    print('Download de dados concluído com sucesso.')
+    grava_banco_dados(new_data, se_existente)
+
+def verifica_banco_dados():
+    try:
+        f = open("./data/historico_bovespa.db")
+        f.close()
+        conn = sqlite3.connect("./data/historico_bovespa.db")
+        try:
+            hist = pd.read_sql_query("SELECT * FROM HIST", conn)
+            if (type(hist) == pd.core.frame.DataFrame):
+                return True
             else:
-                print('Não há necessidade de atualização.')
+                print("Banco de dados corrompido.")
+                return False
+        except pd.io.sql.DatabaseError:
+            print("Banco de dados corrompido.")
+            return False
+        conn.close()
+
+    except FileNotFoundError:
+        print("Não existe ainda um banco de dados.")
+        return False
 
 
-        else:
-            print(f'Baixando dados até {today}.')
-            print('Download de dados do Yahoo Finance:')
-            new_data = yf.download(acoes, end=today)
-            print('Download de dados concluído com sucesso.')
-            # Reordenando os níveis de índice nas colunas
-            new_data.columns = new_data.columns.reorder_levels([1, 0])
-            # Ordenando as colunas em ordem alfabética
-            new_data.sort_index(axis=1, inplace=True)
-
-            print("Novos dados")
-            print(new_data.head())
-
-            conn = sqlite3.connect("./data/historico_bovespa.db")
-            new_data.to_sql('hist', conn, if_exists="append")
-            print("Dados atualizados com sucesso. Últimos registros no banco de dados")
-            print(pd.read_sql_query("SELECT * FROM hist ORDER BY Date DESC LIMIT 10", conn))
-            conn.close()
-
+def grava_banco_dados(df, se_existente="append"):
+    conn = sqlite3.connect("./data/historico_bovespa.db")
+    df.to_sql('hist', conn, if_exists=se_existente)
+    print('Gravação dos dados concluída com sucesso.')
+    conn.close()
 
 def carrega_base_dados():
     conn = sqlite3.connect("./data/historico_bovespa.db")
@@ -130,6 +206,7 @@ def carrega_base_dados():
     hist.columns = list(map(literal_eval, hist.columns))
     hist.columns = pd.MultiIndex.from_tuples(hist.columns)
     return hist
+
 
 def inclui_ativo(ticker):
     '''
