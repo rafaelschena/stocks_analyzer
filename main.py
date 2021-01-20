@@ -30,7 +30,7 @@ the_end()
 Melhorias a serem feitas:
     - escrever função para reconstruir lista original de ativos
     - escrever funções para executar querys SQL no banco de dados
-    - verificar se um ativo já está na lista de downloads antes de incluir novamente
+    - 
     - verificar consistência dos ativos do banco de dados com os da lista csv inicial, e caso falte algum, atualizar
     - corrigir escalas da função desenha_grafico
     - plotar gráfico em periodicidades semanais e mensais

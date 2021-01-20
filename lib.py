@@ -215,33 +215,36 @@ def inclui_ativo(ticker):
     :param ticker: ticker de ativo a ser incluído na base de dados
     :return:
     '''
-
-    # Atualizando a base de dados existente
-    atualiza_base_dados()
-    hist = carrega_base_dados()
-
-    print(f'Download de dados de {ticker} do Yahoo Finance:')
-    new_data = yf.download(ticker, end=ontem)
-    print('Download de dados concluído com sucesso.')
-
-    # Adicionando o nome do ativo em formato de tupla no nome das colunas
-    new_data.columns = [f'("{ticker}", "'+ i +'")' for i in new_data.columns]
-    new_data.columns = list(map(literal_eval, new_data.columns))
-    new_data.columns = pd.MultiIndex.from_tuples(new_data.columns)
-
-    hist = pd.concat([hist, new_data], axis=1)
-    print('Gravando dados no banco de dados.')
-    conn = sqlite3.connect("./data/historico_bovespa.db")
-    hist.to_sql('hist', conn, if_exists="replace")
-    conn.commit()
-    conn.close()
-    print('Dados gravados com sucesso.')
-
-    # Atualizando o arquivo csv com as ações a serem atualizadas
     acoes = pd.read_csv('./data/acoes.csv', names=['Codigo']).Codigo
-    acoes = acoes.append(pd.Series(ticker), ignore_index=True)
-    acoes.to_csv('./data/acoes.csv', index=False, header=False)
-    print('Lista de ativos atualizada.')
+
+    if(ticker in acoes.values):
+        print('Este ativo já faz parte da base de dados.')
+    else:
+        # Atualizando a base de dados existente
+        atualiza_base_dados()
+        hist = carrega_base_dados()
+
+        print(f'Download de dados de {ticker} do Yahoo Finance:')
+        new_data = yf.download(ticker, end=ontem)
+        print('Download de dados concluído com sucesso.')
+
+        # Adicionando o nome do ativo em formato de tupla no nome das colunas
+        new_data.columns = [f'("{ticker}", "' + i + '")' for i in new_data.columns]
+        new_data.columns = list(map(literal_eval, new_data.columns))
+        new_data.columns = pd.MultiIndex.from_tuples(new_data.columns)
+
+        hist = pd.concat([hist, new_data], axis=1)
+        print('Gravando dados no banco de dados.')
+        conn = sqlite3.connect("./data/historico_bovespa.db")
+        hist.to_sql('hist', conn, if_exists="replace")
+        conn.commit()
+        conn.close()
+        print('Dados gravados com sucesso.')
+
+        # Atualizando o arquivo csv com as ações a serem atualizadas
+        acoes = acoes.append(pd.Series(ticker), ignore_index=True)
+        acoes.to_csv('./data/acoes.csv', index=False, header=False)
+        print('Lista de ativos atualizada.')
 
 def desenha_grafico(ticker):
     from bokeh.plotting import figure, output_file, show, ColumnDataSource
