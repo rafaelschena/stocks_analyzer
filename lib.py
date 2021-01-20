@@ -5,9 +5,17 @@ import pandas as pd
 import yfinance as yf
 import sqlite3
 from ast import literal_eval
-
+import warnings
+warnings.filterwarnings(action="ignore")
 from pandas import DataFrame, Series
 from pandas.io.parsers import TextFileReader
+
+# Variáveis globais utilizadas em várias funções
+today = pd.datetime.today()
+ontem = pd.to_datetime(-1, unit='D', origin=today)
+ontem = str(ontem)[0:10]+' 23:59:59'
+ontem = pd.to_datetime(ontem)
+
 
 
 def imprime_boas_vindas():
@@ -22,7 +30,18 @@ def the_end():
     print('#################################################################')
     print('')
 
-
+def download_dados(inicio=None):
+    acoes = pd.read_csv('./data/acoes.csv', names=['Codigo'])
+    acoes = list(acoes.Codigo)
+    print(f'Baixando dados até {ontem}.')
+    print('Download de dados do Yahoo Finance:')
+    df = yf.download(acoes, start=inicio, end=ontem)
+    print('Download de dados concluído com sucesso.')
+    # Reordenando os níveis de índice nas colunas
+    df.columns = df.columns.reorder_levels([1, 0])
+    # Ordenando as colunas em ordem alfabética
+    df.sort_index(axis=1, inplace=True)
+    return df
 
 def atualiza_base_dados():
     '''
@@ -36,10 +55,6 @@ def atualiza_base_dados():
     acoes = list(acoes.Codigo)
 
     # Definindo o dia de hoje como o término do período de download
-    today = pd.datetime.today()
-#    ontem = pd.to_datetime(-1, unit='D', origin=today)
-    today = str(today)[0:10]
-#    ontem = str(ontem)[0:10]
 
     db_valido = verifica_banco_dados()
 
@@ -52,15 +67,8 @@ def atualiza_base_dados():
         inicio = str(inicio)[0:10]
         print(f'Banco de dados atualizado até {str(ultima)[0:10]}.')
 
-        if (pd.to_datetime(inicio) < pd.to_datetime(today)):
-            print(f'Baixando dados até {today}.')
-            print('Download de dados do Yahoo Finance:')
-            new_data = yf.download(acoes, start=inicio, end=today)
-            print('Download de dados concluído com sucesso.')
-            # Reordenando os níveis de índice nas colunas
-            new_data.columns = new_data.columns.reorder_levels([1, 0])
-            # Ordenando as colunas em ordem alfabética
-            new_data.sort_index(axis=1, inplace=True)
+        if (pd.to_datetime(inicio) < ontem):
+            new_data = download_dados(inicio=inicio)
 
             print("Novos dados a serem gravados:")
             print(new_data.tail())
@@ -87,9 +95,8 @@ def atualiza_base_dados():
 
     if(NoHist):
         print("Não existe ainda um banco de dados.")
+        new_data = download_dados()
         conn = sqlite3.connect("./data/historico_bovespa.db")
-        print('Download de dados do Yahoo Finance:')
-        new_data = yf.download(acoes, end=today) # Início será no primeiro dia disponível na API
         new_data.to_sql('hist', conn, if_exists="append")
         conn.close()
         print('Download de dados concluído com sucesso.')
@@ -155,13 +162,7 @@ def atualiza_base_dados():
 
 def cria_banco_dados(se_existente="append"):
     # Criação do banco de dados com o dia de hoje como o término do período de download
-    today = pd.datetime.today()
-    today = str(today)[0:10]
-    acoes = pd.read_csv('./data/acoes.csv', names=['Codigo'])
-    acoes = list(acoes.Codigo)
-    print('Download de dados do Yahoo Finance:')
-    new_data = yf.download(acoes, end=today)  # Início será no primeiro dia disponível na API
-    print('Download de dados concluído com sucesso.')
+    new_data = download_dados()
     grava_banco_dados(new_data, se_existente)
 
 def verifica_banco_dados():
@@ -219,10 +220,8 @@ def inclui_ativo(ticker):
     atualiza_base_dados()
     hist = carrega_base_dados()
 
-    today = pd.datetime.today()
-    today = str(today)[0:10]
     print(f'Download de dados de {ticker} do Yahoo Finance:')
-    new_data = yf.download(ticker, end=today)
+    new_data = yf.download(ticker, end=ontem)
     print('Download de dados concluído com sucesso.')
 
     # Adicionando o nome do ativo em formato de tupla no nome das colunas
