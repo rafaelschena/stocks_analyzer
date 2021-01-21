@@ -17,7 +17,6 @@ ontem = str(ontem)[0:10]+' 23:59:59'
 ontem = pd.to_datetime(ontem)
 
 
-
 def imprime_boas_vindas():
     print('#################################################################')
     print('############### Bem-vindo ao Stocks Analyzer ####################')
@@ -25,10 +24,22 @@ def imprime_boas_vindas():
     print('')
 
 def the_end():
-    print('#################################################################')
+#    print('#################################################################')
     print('################ Stocks Analyzer Encerrado ######################')
-    print('#################################################################')
-    print('')
+#    print('#################################################################')
+#    print('')
+
+def valida_entrada(entrada, opcoes):
+    try:
+        input = int(entrada)
+    except:
+        return False
+    if(input not in opcoes):
+        return False
+    else:
+        return True
+
+
 
 def download_dados(inicio=None):
     acoes = pd.read_csv('./data/acoes.csv', names=['Codigo'])

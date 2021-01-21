@@ -7,20 +7,60 @@ imprime_boas_vindas()
 
 while True:
     print('=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=')
-    print('Digite uma opção:')
-    print('1 - Atualizar base de dados')
-    print('2 - Incluir ativo na base de dados')
-    print('3 - Exibir gráfico')
+    print('Menu Principal:')
+    print('1 - Gerenciar base de dados')
+    print('2 - Gráficos')
     print('99 - Sair do sistema')
     print('=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=')
 
-    opcao = int(input('Digite a opção desejada: '))
+    opcao = input('Digite a opção desejada: ')
+    while(not valida_entrada(opcao, [1, 2, 99])):
+        print('Opção inválida')
+        opcao = input('Digite a opção desejada: ')
+    opcao = int(opcao)
+
     if opcao == 1:
-        atualiza_base_dados()
+        print('=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=')
+        print('Gerenciar base de dados:')
+        print('Digite uma opção:')
+        print('1 - Atualizar banco de dados')
+        print('2 - Incluir ativos no banco de dados')
+        print('99 - Voltar')
+
+        opcao = input('Digite a opção desejada: ')
+        while (not valida_entrada(opcao, [1, 2, 99])):
+            print('Opção inválida')
+            opcao = input('Digite a opção desejada: ')
+        opcao = int(opcao)
+
+        if opcao == 1:
+            atualiza_base_dados()
+        elif opcao == 2:
+            inclui_ativo(input('Digite o ativo:').upper())
+        elif opcao == 99:
+            continue
+
     elif opcao == 2:
-        inclui_ativo(input('Digite o ativo:').upper())
-    elif opcao == 3:
-        desenha_grafico(input('Digite o ativo:').upper())
+        print('=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=')
+        print('Gráficos:')
+        print('Digite uma opção:')
+        print('1 - Gráfico diário')
+        print('2 - Gráfico semanal')
+        print('99 - Voltar')
+
+        opcao = input('Digite a opção desejada: ')
+        while (not valida_entrada(opcao, [1, 2, 99])):
+            print('Opção inválida')
+            opcao = input('Digite a opção desejada: ')
+        opcao = int(opcao)
+
+        if opcao == 1:
+            desenha_grafico(input('Digite o ativo:').upper())
+        elif opcao == 2:
+            desenha_grafico(input('Digite o ativo:').upper())
+        elif opcao == 99:
+            continue
+
     elif opcao == 99:
         break
 
