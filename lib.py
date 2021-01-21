@@ -46,7 +46,7 @@ def download_dados(inicio=None):
     acoes = list(acoes.Codigo)
     print(f'Baixando dados até {ontem}.')
     print('Download de dados do Yahoo Finance:')
-    df = yf.download(acoes, start=inicio, end=ontem)
+    df = yf.download(acoes, start=inicio, end=ontem).drop_duplicates()
     print('Download de dados concluído com sucesso.')
     # Reordenando os níveis de índice nas colunas
     df.columns = df.columns.reorder_levels([1, 0])
@@ -236,7 +236,7 @@ def inclui_ativo(ticker):
         hist = carrega_base_dados()
 
         print(f'Download de dados de {ticker} do Yahoo Finance:')
-        new_data = yf.download(ticker, end=ontem)
+        new_data = yf.download(ticker, end=ontem).drop_duplicates()
         print('Download de dados concluído com sucesso.')
 
         # Adicionando o nome do ativo em formato de tupla no nome das colunas

@@ -69,10 +69,11 @@ the_end()
 '''
 Melhorias a serem feitas:
     - escrever função para reconstruir lista original de ativos
+    - implantar validação de ativos digitados
     - escrever funções para executar querys SQL no banco de dados
     - 
     - verificar consistência dos ativos do banco de dados com os da lista csv inicial, e caso falte algum, atualizar
-    - corrigir escalas da função desenha_grafico
+
     - plotar gráfico em periodicidades semanais e mensais
     - plotar linhas horizontais de suporte e resistência principais
 '''
