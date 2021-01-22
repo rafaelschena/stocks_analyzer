@@ -24,10 +24,8 @@ def imprime_boas_vindas():
     print('')
 
 def the_end():
-#    print('#################################################################')
     print('################ Stocks Analyzer Encerrado ######################')
-#    print('#################################################################')
-#    print('')
+
 
 def valida_entrada(entrada, opcoes):
     try:
@@ -41,12 +39,19 @@ def valida_entrada(entrada, opcoes):
 
 
 
-def download_dados(inicio=None):
+def download_dados(inicio=None, intervalo='1d'):
+    '''
+    Faz o download de dados do Yahoo Finance e formata o índice da coluna com o nome do ativo no primeiro nível e os
+    dados de Open/High/Low/Close/Adj. Close/Volume em segundo nível.
+    :param inicio:
+    :param intervalo:
+    :return:
+    '''
     acoes = pd.read_csv('./data/acoes.csv', names=['Codigo'])
     acoes = list(acoes.Codigo)
     print(f'Baixando dados até {ontem}.')
     print('Download de dados do Yahoo Finance:')
-    df = yf.download(acoes, start=inicio, end=ontem).drop_duplicates()
+    df = yf.download(acoes, start=inicio, end=ontem, interval=intervalo).drop_duplicates()
     print('Download de dados concluído com sucesso.')
     # Reordenando os níveis de índice nas colunas
     df.columns = df.columns.reorder_levels([1, 0])
