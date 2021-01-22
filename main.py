@@ -73,7 +73,7 @@ Melhorias a serem feitas:
     - escrever funções para executar querys SQL no banco de dados
     - 
     - verificar consistência dos ativos do banco de dados com os da lista csv inicial, e caso falte algum, atualizar
-
+    - implementar base de dados semanal e mensal
     - plotar gráfico em periodicidades semanais e mensais
     - plotar linhas horizontais de suporte e resistência principais
 '''
