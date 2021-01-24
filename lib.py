@@ -101,7 +101,7 @@ def atualiza_base_dados():
 def cria_banco_dados(se_existente="append"):
     # Criação do banco de dados com o dia de hoje como o término do período de download
     new_data = download_dados()
-    grava_banco_dados(new_data, se_existente)
+    grava_banco_dados(new_data, se_existente=se_existente)
 
 def verifica_banco_dados():
     try:
@@ -125,9 +125,9 @@ def verifica_banco_dados():
         return False
 
 
-def grava_banco_dados(df, se_existente="append"):
+def grava_banco_dados(df, tabela='hist', se_existente="append"):
     conn = sqlite3.connect("./data/historico_bovespa.db")
-    df.to_sql('hist', conn, if_exists=se_existente)
+    df.to_sql(name=tabela, con=conn, if_exists=se_existente)
     print('Gravação dos dados concluída com sucesso.')
     conn.close()
 
