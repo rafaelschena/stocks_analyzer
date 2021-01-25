@@ -71,29 +71,33 @@ def atualiza_base_dados():
     acoes = list(acoes.Codigo)
 
     # Definindo o dia de hoje como o término do período de download
-
     db_valido = verifica_banco_dados()
 
     if db_valido:
-        hist = carrega_base_dados()
-        print("Últimos registros no banco de dados")
-        print(hist.tail())
-        ultima = hist.index[-1]
-        inicio = pd.to_datetime(1, unit='D', origin=ultima)
-        inicio = str(inicio)[0:10]
-        print(f'Banco de dados atualizado até {str(ultima)[0:10]}.')
+        period_tabela = {
+            '1d': 'hist',
+            '1wk': 'week',
+            '1mo': 'month'
+        }
+        for key in period_tabela:
+            hist = carrega_base_dados(tabela=period_tabela[key])
+            print(f"Últimos registros no banco de dados com periodicidade {key}")
+            print(hist.tail())
+            ultima = hist.index[-1]
+            inicio = pd.to_datetime(1, unit='D', origin=ultima)
+            inicio = str(inicio)[0:10]
+            print(f'Banco de dados atualizado até {str(ultima)[0:10]}.')
 
-        if (pd.to_datetime(inicio) < ontem):
-            new_data = download_dados(inicio=inicio)
+            if (pd.to_datetime(inicio) < ontem):
+                new_data = download_dados(inicio=inicio, intervalo=key)
+                print(f"Novos dados a serem gravados na tabela {period_tabela[key]}:")
+                print(new_data.tail())
+                grava_banco_dados(new_data, tabela=period_tabela[key])
+    #            print("Últimos registros no banco de dados:")
+    #            print(pd.read_sql_query("SELECT * FROM hist ORDER BY Date DESC LIMIT 10", conn))
 
-            print("Novos dados a serem gravados:")
-            print(new_data.tail())
-            grava_banco_dados(new_data)
-#            print("Últimos registros no banco de dados:")
-#            print(pd.read_sql_query("SELECT * FROM hist ORDER BY Date DESC LIMIT 10", conn))
-
-        else:
-            print('Banco de dados já está atualizado.')
+            else:
+                print('Banco de dados já está atualizado.')
 
     else:
         cria_banco_dados("replace")
@@ -169,7 +173,7 @@ def inclui_ativo(ticker):
     else:
         # Atualizando a base de dados existente
         atualiza_base_dados()
-        hist = carrega_base_dados()
+        hist = carrega_base_dados(tabela='hist')
 
         print(f'Download de dados de {ticker} do Yahoo Finance:')
         new_data = yf.download(ticker, end=ontem).drop_duplicates()
@@ -203,7 +207,7 @@ def desenha_grafico(ticker):
     p = figure(x_axis_type="datetime", tools=TOOLS, plot_width=1000, title=f"Gráfico de {ticker} Diário")
     p.xaxis.major_label_orientation = pi / 4
     p.grid.grid_line_alpha = 0.3
-    hist = carrega_base_dados()
+    hist = carrega_base_dados(tabela='hist')
     df = hist[ticker].iloc[-250:]
 #    df = hist[ticker]
     # Create a ColumnDataSource from df: source
