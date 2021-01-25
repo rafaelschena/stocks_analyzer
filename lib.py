@@ -110,7 +110,9 @@ def verifica_banco_dados():
         conn = sqlite3.connect("./data/historico_bovespa.db")
         try:
             hist = pd.read_sql_query("SELECT * FROM HIST", conn)
-            if (type(hist) == pd.core.frame.DataFrame):
+            week = pd.read_sql_query("SELECT * FROM WEEK", conn)
+            month = pd.read_sql_query("SELECT * FROM MONTH", conn)
+            if type(hist) == pd.core.frame.DataFrame and type(week) == pd.core.frame.DataFrame and type(month) == pd.core.frame.DataFrame:
                 return True
             else:
                 print("Banco de dados corrompido.")
@@ -118,7 +120,6 @@ def verifica_banco_dados():
         except pd.io.sql.DatabaseError:
             print("Banco de dados corrompido.")
             return False
-        conn.close()
 
     except FileNotFoundError:
         print("Não existe ainda um banco de dados.")
