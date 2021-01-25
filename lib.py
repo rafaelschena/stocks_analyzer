@@ -117,9 +117,9 @@ def verifica_banco_dados():
         f.close()
         conn = sqlite3.connect("./data/historico_bovespa.db")
         try:
-            hist = pd.read_sql_query("SELECT * FROM HIST", conn)
-            week = pd.read_sql_query("SELECT * FROM WEEK", conn)
-            month = pd.read_sql_query("SELECT * FROM MONTH", conn)
+            hist = pd.read_sql_query("SELECT * FROM HIST ORDER BY Date DESC LIMIT 1", conn)
+            week = pd.read_sql_query("SELECT * FROM WEEK ORDER BY Date DESC LIMIT 1", conn)
+            month = pd.read_sql_query("SELECT * FROM MONTH ORDER BY Date DESC LIMIT 1", conn)
             if type(hist) == pd.core.frame.DataFrame and type(week) == pd.core.frame.DataFrame and type(month) == pd.core.frame.DataFrame:
                 return True
             else:
