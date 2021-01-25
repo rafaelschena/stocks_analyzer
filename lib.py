@@ -47,9 +47,14 @@ def download_dados(inicio=None, intervalo='1d'):
     :param intervalo:
     :return:
     '''
+    period_tabela = {
+        '1d': 'diária',
+        '1wk': 'semanal',
+        '1mo': 'mensal'
+    }
     acoes = pd.read_csv('./data/acoes.csv', names=['Codigo'])
     acoes = list(acoes.Codigo)
-    print(f'Baixando dados até {ontem} com periodicidade {intervalo}.')
+    print(f'Baixando dados até {ontem} com periodicidade {period_tabela[intervalo]}.')
     print('Download de dados do Yahoo Finance:')
     df = yf.download(acoes, start=inicio, end=ontem, interval=intervalo).drop_duplicates()
     print('Download de dados concluído com sucesso.')
@@ -75,9 +80,9 @@ def atualiza_base_dados():
 
     if db_valido:
         period_tabela = {
-            '1d': 'hist',
-            '1wk': 'week',
-            '1mo': 'month'
+            '1d': 'diaria',
+            '1wk': 'semanal',
+            '1mo': 'mensal'
         }
         for key in period_tabela:
             hist = carrega_base_dados(tabela=period_tabela[key])
@@ -94,7 +99,7 @@ def atualiza_base_dados():
                 print(new_data.tail())
                 grava_banco_dados(new_data, tabela=period_tabela[key])
     #            print("Últimos registros no banco de dados:")
-    #            print(pd.read_sql_query("SELECT * FROM hist ORDER BY Date DESC LIMIT 10", conn))
+    #            print(pd.read_sql_query("SELECT * FROM diaria ORDER BY Date DESC LIMIT 10", conn))
 
             else:
                 print('Banco de dados já está atualizado.')
@@ -106,9 +111,9 @@ def cria_banco_dados(se_existente="append"):
     # Criação do banco de dados com o dia de hoje como o término do período de download
 
     period_tabela = {
-        '1d': 'hist',
-        '1wk': 'week',
-        '1mo': 'month'
+        '1d': 'diaria',
+        '1wk': 'semanal',
+        '1mo': 'mensal'
     }
     for key in period_tabela:
         new_data = download_dados(intervalo=key)
@@ -121,9 +126,9 @@ def verifica_banco_dados():
         f.close()
         conn = sqlite3.connect("./data/historico_bovespa.db")
         try:
-            hist = pd.read_sql_query("SELECT * FROM HIST ORDER BY Date DESC LIMIT 1", conn)
-            week = pd.read_sql_query("SELECT * FROM WEEK ORDER BY Date DESC LIMIT 1", conn)
-            month = pd.read_sql_query("SELECT * FROM MONTH ORDER BY Date DESC LIMIT 1", conn)
+            hist = pd.read_sql_query("SELECT * FROM diaria ORDER BY Date DESC LIMIT 1", conn)
+            week = pd.read_sql_query("SELECT * FROM semanal ORDER BY Date DESC LIMIT 1", conn)
+            month = pd.read_sql_query("SELECT * FROM mensal ORDER BY Date DESC LIMIT 1", conn)
             if type(hist) == pd.core.frame.DataFrame and type(week) == pd.core.frame.DataFrame and type(month) == pd.core.frame.DataFrame:
                 return True
             else:
@@ -138,13 +143,13 @@ def verifica_banco_dados():
         return False
 
 
-def grava_banco_dados(df, tabela='hist', se_existente="append"):
+def grava_banco_dados(df, tabela='diaria', se_existente="append"):
     conn = sqlite3.connect("./data/historico_bovespa.db")
     df.to_sql(name=tabela, con=conn, if_exists=se_existente)
     print('Gravação dos dados concluída com sucesso.')
     conn.close()
 
-def carrega_base_dados(tabela='hist'):
+def carrega_base_dados(tabela='diaria'):
     conn = sqlite3.connect("./data/historico_bovespa.db")
     try:
         hist = pd.read_sql_query(f"SELECT * FROM {tabela}", conn)
@@ -173,7 +178,7 @@ def inclui_ativo(ticker):
     else:
         # Atualizando a base de dados existente
         atualiza_base_dados()
-        hist = carrega_base_dados(tabela='hist')
+        hist = carrega_base_dados(tabela='diaria')
 
         print(f'Download de dados de {ticker} do Yahoo Finance:')
         new_data = yf.download(ticker, end=ontem).drop_duplicates()
@@ -187,7 +192,7 @@ def inclui_ativo(ticker):
         hist = pd.concat([hist, new_data], axis=1)
         print('Gravando dados no banco de dados.')
         conn = sqlite3.connect("./data/historico_bovespa.db")
-        hist.to_sql('hist', conn, if_exists="replace")
+        hist.to_sql('diaria', conn, if_exists="replace")
         conn.commit()
         conn.close()
         print('Dados gravados com sucesso.')
@@ -207,7 +212,7 @@ def desenha_grafico(ticker):
     p = figure(x_axis_type="datetime", tools=TOOLS, plot_width=1000, title=f"Gráfico de {ticker} Diário")
     p.xaxis.major_label_orientation = pi / 4
     p.grid.grid_line_alpha = 0.3
-    hist = carrega_base_dados(tabela='hist')
+    hist = carrega_base_dados(tabela='diaria')
     df = hist[ticker].iloc[-250:]
 #    df = hist[ticker]
     # Create a ColumnDataSource from df: source
