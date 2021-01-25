@@ -49,7 +49,7 @@ def download_dados(inicio=None, intervalo='1d'):
     '''
     acoes = pd.read_csv('./data/acoes.csv', names=['Codigo'])
     acoes = list(acoes.Codigo)
-    print(f'Baixando dados até {ontem}.')
+    print(f'Baixando dados até {ontem} com periodicidade {intervalo}.')
     print('Download de dados do Yahoo Finance:')
     df = yf.download(acoes, start=inicio, end=ontem, interval=intervalo).drop_duplicates()
     print('Download de dados concluído com sucesso.')
@@ -100,8 +100,16 @@ def atualiza_base_dados():
 
 def cria_banco_dados(se_existente="append"):
     # Criação do banco de dados com o dia de hoje como o término do período de download
-    new_data = download_dados()
-    grava_banco_dados(new_data, se_existente=se_existente)
+
+    period_tabela = {
+        '1d': 'hist',
+        '1wk': 'week',
+        '1mo': 'month'
+    }
+    for key in period_tabela:
+        new_data = download_dados(intervalo=key)
+        grava_banco_dados(new_data, tabela=period_tabela[key], se_existente=se_existente)
+
 
 def verifica_banco_dados():
     try:
@@ -132,10 +140,10 @@ def grava_banco_dados(df, tabela='hist', se_existente="append"):
     print('Gravação dos dados concluída com sucesso.')
     conn.close()
 
-def carrega_base_dados():
+def carrega_base_dados(tabela='hist'):
     conn = sqlite3.connect("./data/historico_bovespa.db")
     try:
-        hist = pd.read_sql_query("SELECT * FROM HIST", conn)
+        hist = pd.read_sql_query(f"SELECT * FROM {tabela}", conn)
     except pd.io.sql.DatabaseError:
         print("Banco de dados corrompido. Iniciando download da base de dados.")
         return None
