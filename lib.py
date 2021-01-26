@@ -50,14 +50,14 @@ def download_dados(inicio=None, intervalo='1d'):
     period_tabela = {
         '1d': 'diária',
         '1wk': 'semanal',
-        '1mo': 'mensal'
+        #'1mo': 'mensal'
     }
     acoes = pd.read_csv('./data/acoes.csv', names=['Codigo'])
     acoes = list(acoes.Codigo)
     print(f'Baixando dados até {ontem} com periodicidade {period_tabela[intervalo]}.')
     print('Download de dados do Yahoo Finance:')
     df = yf.download(acoes, start=inicio, end=ontem, interval=intervalo).drop_duplicates()
-    print('Download de dados concluído com sucesso.')
+
     # Reordenando os níveis de índice nas colunas
     df.columns = df.columns.reorder_levels([1, 0])
     # Ordenando as colunas em ordem alfabética
@@ -82,7 +82,7 @@ def atualiza_base_dados():
         period_tabela = {
             '1d': 'diaria',
             '1wk': 'semanal',
-            '1mo': 'mensal'
+            #'1mo': 'mensal'
         }
         for key in period_tabela:
             hist = carrega_base_dados(tabela=period_tabela[key])
@@ -113,7 +113,7 @@ def cria_banco_dados(se_existente="append"):
     period_tabela = {
         '1d': 'diaria',
         '1wk': 'semanal',
-        '1mo': 'mensal'
+        #'1mo': 'mensal'
     }
     for key in period_tabela:
         new_data = download_dados(intervalo=key)
@@ -128,8 +128,8 @@ def verifica_banco_dados():
         try:
             hist = pd.read_sql_query("SELECT * FROM diaria ORDER BY Date DESC LIMIT 1", conn)
             week = pd.read_sql_query("SELECT * FROM semanal ORDER BY Date DESC LIMIT 1", conn)
-            month = pd.read_sql_query("SELECT * FROM mensal ORDER BY Date DESC LIMIT 1", conn)
-            if type(hist) == pd.core.frame.DataFrame and type(week) == pd.core.frame.DataFrame and type(month) == pd.core.frame.DataFrame:
+            #month = pd.read_sql_query("SELECT * FROM mensal ORDER BY Date DESC LIMIT 1", conn)
+            if type(hist) == pd.core.frame.DataFrame and type(week) == pd.core.frame.DataFrame:
                 return True
             else:
                 print("Banco de dados corrompido.")
@@ -178,24 +178,31 @@ def inclui_ativo(ticker):
     else:
         # Atualizando a base de dados existente
         atualiza_base_dados()
-        hist = carrega_base_dados(tabela='diaria')
+        period_tabela = {
+            '1d': 'diaria',
+            '1wk': 'semanal',
+            #'1mo': 'mensal'
+        }
 
-        print(f'Download de dados de {ticker} do Yahoo Finance:')
-        new_data = yf.download(ticker, end=ontem).drop_duplicates()
-        print('Download de dados concluído com sucesso.')
+        for key in period_tabela:
+            hist = carrega_base_dados(tabela=period_tabela[key])
+            hist = hist.loc[~hist.index.duplicated(keep='first')] # Linha adicionada
+            print(f'Download de dados de {ticker} até {ontem} do Yahoo Finance com periodicidade {period_tabela[key]}:')
+            new_data = yf.download(ticker, end=ontem).drop_duplicates()
+            new_data = new_data.loc[~new_data.index.duplicated(keep='first')] # Linha adicionada
 
-        # Adicionando o nome do ativo em formato de tupla no nome das colunas
-        new_data.columns = [f'("{ticker}", "' + i + '")' for i in new_data.columns]
-        new_data.columns = list(map(literal_eval, new_data.columns))
-        new_data.columns = pd.MultiIndex.from_tuples(new_data.columns)
+            # Adicionando o nome do ativo em formato de tupla no nome das colunas
+            new_data.columns = [f'("{ticker}", "' + i + '")' for i in new_data.columns]
+            new_data.columns = list(map(literal_eval, new_data.columns))
+            new_data.columns = pd.MultiIndex.from_tuples(new_data.columns)
 
-        hist = pd.concat([hist, new_data], axis=1)
-        print('Gravando dados no banco de dados.')
-        conn = sqlite3.connect("./data/historico_bovespa.db")
-        hist.to_sql('diaria', conn, if_exists="replace")
-        conn.commit()
-        conn.close()
-        print('Dados gravados com sucesso.')
+            hist = pd.concat([hist, new_data], axis=1)
+            print('Gravando dados no banco de dados.')
+            conn = sqlite3.connect("./data/historico_bovespa.db")
+            hist.to_sql(period_tabela[key], conn, if_exists="replace")
+            conn.commit()
+            conn.close()
+            print('Dados gravados com sucesso.')
 
         # Atualizando o arquivo csv com as ações a serem atualizadas
         acoes = acoes.append(pd.Series(ticker), ignore_index=True)
