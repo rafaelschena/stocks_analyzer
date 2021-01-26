@@ -49,7 +49,7 @@ def download_dados(inicio=None, intervalo='1d'):
     '''
     period_tabela = {
         '1d': 'diária',
-        '1wk': 'semanal',
+        #'1wk': 'semanal'
         #'1mo': 'mensal'
     }
     acoes = pd.read_csv('./data/acoes.csv', names=['Codigo'])
@@ -81,7 +81,7 @@ def atualiza_base_dados():
     if db_valido:
         period_tabela = {
             '1d': 'diaria',
-            '1wk': 'semanal',
+            #'1wk': 'semanal'
             #'1mo': 'mensal'
         }
         for key in period_tabela:
@@ -112,7 +112,7 @@ def cria_banco_dados(se_existente="append"):
 
     period_tabela = {
         '1d': 'diaria',
-        '1wk': 'semanal',
+        #'1wk': 'semanal'
         #'1mo': 'mensal'
     }
     for key in period_tabela:
@@ -180,7 +180,7 @@ def inclui_ativo(ticker):
         atualiza_base_dados()
         period_tabela = {
             '1d': 'diaria',
-            '1wk': 'semanal',
+            #'1wk': 'semanal'
             #'1mo': 'mensal'
         }
 
