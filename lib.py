@@ -127,9 +127,9 @@ def verifica_banco_dados():
         conn = sqlite3.connect("./data/historico_bovespa.db")
         try:
             hist = pd.read_sql_query("SELECT * FROM diaria ORDER BY Date DESC LIMIT 1", conn)
-            week = pd.read_sql_query("SELECT * FROM semanal ORDER BY Date DESC LIMIT 1", conn)
+            #week = pd.read_sql_query("SELECT * FROM semanal ORDER BY Date DESC LIMIT 1", conn)
             #month = pd.read_sql_query("SELECT * FROM mensal ORDER BY Date DESC LIMIT 1", conn)
-            if type(hist) == pd.core.frame.DataFrame and type(week) == pd.core.frame.DataFrame:
+            if type(hist) == pd.core.frame.DataFrame:#and type(week) == pd.core.frame.DataFrame and type(month) == pd.core.frame.DataFrame:
                 return True
             else:
                 print("Banco de dados corrompido.")
