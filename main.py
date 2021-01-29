@@ -46,18 +46,21 @@ while True:
         print('Digite uma opção:')
         print('1 - Gráfico diário')
         print('2 - Gráfico semanal')
+        print('3 - Gráfico mensal')
         print('99 - Voltar')
 
         opcao = input('Digite a opção desejada: ')
-        while (not valida_entrada(opcao, [1, 2, 99])):
+        while (not valida_entrada(opcao, [1, 2, 3, 99])):
             print('Opção inválida')
             opcao = input('Digite a opção desejada: ')
         opcao = int(opcao)
 
         if opcao == 1:
-            desenha_grafico(input('Digite o ativo:').upper())
+            desenha_grafico(input('Digite o ativo:').upper(), period='D')
         elif opcao == 2:
-            desenha_grafico(input('Digite o ativo:').upper())
+            desenha_grafico(input('Digite o ativo:').upper(), period='W')
+        elif opcao == 3:
+            desenha_grafico(input('Digite o ativo:').upper(), period='M')
         elif opcao == 99:
             continue
 
@@ -74,6 +77,5 @@ Melhorias a serem feitas:
     - corrigir: verificar se os dados a serem gravados são mais atuais que os existentes na base de dados
     - implementar query para eliminar valores duplicados no banco de dados.
     - verificar consistência dos ativos do banco de dados com os da lista csv inicial, e caso falte algum, atualizar
-    - plotar gráfico em periodicidades semanais e mensais
     - plotar linhas horizontais de suporte e resistência principais
 '''

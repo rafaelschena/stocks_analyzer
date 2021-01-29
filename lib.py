@@ -165,6 +165,25 @@ def carrega_base_dados(tabela='diaria'):
     return hist
 
 
+
+
+def converte_base_dados(df, period):
+    '''
+
+    :param df: um dataframe pandas no formato com os dados de ativo dados pelo Yahoo Finanças
+    :param period: uma string 'M' para mensal e 'W' para semanal.
+    :return: um dataframe pandas no formato com os dados de ativo dados pelo Yahoo Finanças
+    '''
+    return df.resample(period).agg({
+        'Adj Close': 'last',
+        'Close': 'last',
+        'High': 'max',
+        'Low': 'min',
+        'Open': 'first',
+        'Volume': 'sum'}).dropna()
+
+
+
 def inclui_ativo(ticker):
     '''
     Inclui o ativo no banco de dados
@@ -209,7 +228,9 @@ def inclui_ativo(ticker):
         acoes.to_csv('./data/acoes.csv', index=False, header=False)
         print('Lista de ativos atualizada.')
 
-def desenha_grafico(ticker):
+
+
+def desenha_grafico(ticker, period='D'):
     from bokeh.plotting import figure, output_file, show, ColumnDataSource
     from bokeh.models import HoverTool
     from math import pi
@@ -220,8 +241,13 @@ def desenha_grafico(ticker):
     p.xaxis.major_label_orientation = pi / 4
     p.grid.grid_line_alpha = 0.3
     hist = carrega_base_dados(tabela='diaria')
-    df = hist[ticker].iloc[-250:]
-#    df = hist[ticker]
+
+    if period == 'D':
+        df = hist[ticker].iloc[-250:]
+    else:
+        df = converte_base_dados(hist[ticker], period).iloc[-250:]
+
+    print(f'O tipo do objeto df é : {type(df)}')
     # Create a ColumnDataSource from df: source
     source = ColumnDataSource(df)
 
@@ -239,7 +265,13 @@ def desenha_grafico(ticker):
     # p.line(resist.index, resist, line_color='green', line_width=2)
     # p.line(suporte.index, suporte, line_color='red', line_width=2)
 
-    output_file(f'{ticker}.html', title=f'{ticker} Diário')
+    period_tabela = {
+        'D': 'Diário',
+        'W': 'Semanal',
+        'M': 'Mensal'
+    }
+
+    output_file(f'{ticker}_{period}.html', title=f'{ticker} {period_tabela[period]}')
 
     p.add_tools(HoverTool(
         tooltips=[("Data", "@Date{%F}"), ("Abertura", "@Open"), ("Fechamento", "@Close"), ("Máxima", "@High"),
