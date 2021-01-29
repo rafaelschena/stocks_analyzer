@@ -235,9 +235,15 @@ def desenha_grafico(ticker, period='D'):
     from bokeh.models import HoverTool
     from math import pi
 
+    period_tabela = {
+        'D': 'Diário',
+        'W': 'Semanal',
+        'M': 'Mensal'
+    }
+
     TOOLS = "pan,wheel_zoom,box_zoom,reset,save"
 
-    p = figure(x_axis_type="datetime", tools=TOOLS, plot_width=1000, title=f"Gráfico de {ticker} Diário")
+    p = figure(x_axis_type="datetime", tools=TOOLS, plot_width=1000, title=f"Gráfico de {ticker} {period_tabela[period]}")
     p.xaxis.major_label_orientation = pi / 4
     p.grid.grid_line_alpha = 0.3
     hist = carrega_base_dados(tabela='diaria')
@@ -264,12 +270,6 @@ def desenha_grafico(ticker, period='D'):
     # resist = pd.Series(np.full((250,), max250), index=petr3.index)
     # p.line(resist.index, resist, line_color='green', line_width=2)
     # p.line(suporte.index, suporte, line_color='red', line_width=2)
-
-    period_tabela = {
-        'D': 'Diário',
-        'W': 'Semanal',
-        'M': 'Mensal'
-    }
 
     output_file(f'{ticker}_{period}.html', title=f'{ticker} {period_tabela[period]}')
 
