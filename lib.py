@@ -228,7 +228,14 @@ def inclui_ativo(ticker):
         acoes.to_csv('./data/acoes.csv', index=False, header=False)
         print('Lista de ativos atualizada.')
 
-
+def acha_topo_e_fundo(df):
+    pontos = pd.DataFrame(columns=['Data', 'Valor', 'Classe'])
+    for i in range(1, len(df.High)-1):
+        if df.High[i] > df.High[i-1] and df.High[i] > df.High[i+1]:
+            pontos.loc[i] = [df.High.index[i], df.High[i], 'topo']
+        if df.Low[i] < df.Low[i-1] and df.Low[i] < df.Low[i+1]:
+            pontos.loc[i] = [df.Low.index[i], df.Low[i], 'fundo']
+    return pontos
 
 def desenha_grafico(ticker, period='D'):
     from bokeh.plotting import figure, output_file, show, ColumnDataSource
@@ -253,7 +260,10 @@ def desenha_grafico(ticker, period='D'):
     else:
         df = converte_base_dados(hist[ticker], period).iloc[-250:]
 
-    print(f'O tipo do objeto df é : {type(df)}')
+
+    pontos = acha_topo_e_fundo(df.dropna())
+
+
     # Create a ColumnDataSource from df: source
     source = ColumnDataSource(df)
 
@@ -263,6 +273,11 @@ def desenha_grafico(ticker, period='D'):
     p.segment(x0="Date", y0="High", x1="Date", y1="Low", color="black", source=source)
     p.vbar(x="Date", width=w, top="Close", bottom="Open", fill_color="#00FF00", line_color="black", source=inc)
     p.vbar(x="Date", width=w, top="Open", bottom="Close", fill_color="#FF0000", line_color="black", source=dec)
+
+    p.circle(x=pontos[pontos['Classe'] == 'topo'].Data, y=pontos[pontos['Classe'] == 'topo'].Valor, size=10,
+             color='blue')
+    p.circle(x=pontos[pontos['Classe'] == 'fundo'].Data, y=pontos[pontos['Classe'] == 'fundo'].Valor, size=10,
+             color='red')
 
     # min250 = petr3.Low.min()
     # suporte = np.full((250,), min250)
