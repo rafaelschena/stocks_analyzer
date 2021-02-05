@@ -229,21 +229,28 @@ def inclui_ativo(ticker):
         acoes.to_csv('./data/acoes.csv', index=False, header=False)
         print('Lista de ativos atualizada.')
 
+
 def acha_topo_e_fundo(df):
     '''
     Localiza os topos e fundos locais de uma série temporal do Yahoo Finanças.
     :param df: Recebe um dataframe com a data como índice e os valores Open, Close, High, Low, Adj. Close
-    :return: Retorna um dataframe com a sequência de topos e fundos com colunas Data, Valor, Topo (True para
-    topo, False para fundo)
+    :return: Retorna um dataframe com a sequência de topos e fundos com colunas Data, Valor.
     '''
-    pontos = pd.DataFrame(columns=['Data', 'Valor', 'Topo'])
-    for i in range(1, len(df.High)-1):
-        if df.High[i] > df.High[i-1] and df.High[i] > df.High[i+1]:
-            pontos.loc[i] = [df.High.index[i], df.High[i], True]
-        if df.Low[i] < df.Low[i-1] and df.Low[i] < df.Low[i+1]:
-            pontos.loc[i] = [df.Low.index[i], df.Low[i], False]
-    pontos.reset_index(inplace=True, drop=True)
-    return pontos
+    topos = pd.DataFrame(columns=['Data', 'Valor'])
+    fundos = pd.DataFrame(columns=['Data', 'Valor'])
+    for i in range(1, len(df.High) - 1):
+        if df.High[i] > df.High[i - 1] and df.High[i] > df.High[i + 1]:
+            topos.loc[i] = [df.High.index[i], df.High[i]]
+        if df.Low[i] < df.Low[i - 1] and df.Low[i] < df.Low[i + 1]:
+            fundos.loc[i] = [df.Low.index[i], df.Low[i]]
+    topos.reset_index(inplace=True, drop=True)
+    fundos.reset_index(inplace=True, drop=True)
+    return topos, fundos
+    # pontos = pd.concat([topos, fundos], ignore_index=True)
+    # pontos.reset_index(inplace=True, drop=True)
+    # pontos.sort_values(by='Data', inplace=True)
+    # return pontos
+
 
 def acha_pivots(df):
     '''
@@ -260,13 +267,18 @@ def acha_pivots(df):
     pivots = pd.DataFrame(columns=['Data', 'Alta', 'P3', 'P2', 'P1'])
     for i in range(2, len(pontos)):
         if pontos.iloc[i].Topo:
-            if (not pontos.iloc[i-1].Topo) and pontos.iloc[i-2].Topo and (pontos.iloc[i].Valor > pontos.iloc[i-2].Valor):
-                pivots.loc[i] = [pontos.iloc[i].Data, True, pontos.iloc[i].Valor, pontos.iloc[i-1].Valor, pontos.iloc[i-2].Valor]
+            if (not pontos.iloc[i - 1].Topo) and pontos.iloc[i - 2].Topo and (
+                    pontos.iloc[i].Valor > pontos.iloc[i - 2].Valor):
+                pivots.loc[i] = [pontos.iloc[i].Data, True, pontos.iloc[i].Valor, pontos.iloc[i - 1].Valor,
+                                 pontos.iloc[i - 2].Valor]
         else:
-            if pontos.iloc[i-1].Topo and (not pontos.iloc[i-2].Topo) and (pontos.iloc[i].Valor < pontos.iloc[i-2].Valor):
-                pivots.loc[i] = [pontos.iloc[i].Data, False, pontos.iloc[i].Valor, pontos.iloc[i-1].Valor, pontos.iloc[i-2].Valor]
+            if pontos.iloc[i - 1].Topo and (not pontos.iloc[i - 2].Topo) and (
+                    pontos.iloc[i].Valor < pontos.iloc[i - 2].Valor):
+                pivots.loc[i] = [pontos.iloc[i].Data, False, pontos.iloc[i].Valor, pontos.iloc[i - 1].Valor,
+                                 pontos.iloc[i - 2].Valor]
     pivots.reset_index(inplace=True, drop=True)
-    return pivots
+    return pivots, pontos
+
 
 def acha_terminais(df):
     '''
@@ -274,18 +286,32 @@ def acha_terminais(df):
     :param df: Recebe um dataframe com a data como índice e os valores Open, Close, High, Low, Adj. Close
     :return: Dataframe com a sequência de topos e fundos terminais com as seguintes informações:
     Data: Data do ponto em questão.
-    Terminal_alta: True para ponto terminal de alta ou False para ponto terminal de baixa.
     Valor: Valor do ativo na data.
     '''
-    pivots = acha_pivots(df)
-    terminais = pd.DataFrame(columns=['Data', 'Terminal_alta', 'Valor'])
-    for i in range(0, len(pivots)-1):
-        if pivots.iloc[i].Alta and not pivots.iloc[i+1].Alta:
-            terminais.loc[i] = [pivots.iloc[i].Data, True, pivots.iloc[i].P3]
-        elif not pivots.iloc[i].Alta and pivots.iloc[i+1].Alta:
-            terminais.loc[i] = [pivots.iloc[i].Data, False, pivots.iloc[i].P3]
-    terminais.reset_index(inplace=True, drop=True)
-    return terminais
+    topos, fundos = acha_topo_e_fundo(df)
+
+    topos_terminais = pd.DataFrame(columns=['Data', 'Valor'])
+    for i in range(1, len(topos) - 1):
+        if topos.iloc[i].Valor > topos.iloc[i - 1].Valor and topos.iloc[i].Valor > topos.iloc[i + 1].Valor:
+            topos_terminais.loc[i] = [topos.Data[i], topos.Valor[i]]
+
+    fundos_terminais = pd.DataFrame(columns=['Data', 'Valor'])
+    for i in range(1, len(fundos) - 1):
+        if fundos.iloc[i].Valor < fundos.iloc[i - 1].Valor and fundos.iloc[i].Valor < fundos.iloc[i + 1].Valor:
+            fundos_terminais.loc[i] = [fundos.Data[i], fundos.Valor[i]]
+
+    topos_terminais.reset_index(inplace=True, drop=True)
+    fundos_terminais.reset_index(inplace=True, drop=True)
+    return topos_terminais, fundos_terminais, topos, fundos
+# Implementação anterior
+#    terminais = pd.DataFrame(columns=['Data', 'Terminal_alta', 'Valor'])
+#    for i in range(0, len(pivots)-1):
+#        if pivots.iloc[i].Alta and not pivots.iloc[i+1].Alta:
+#            terminais.loc[i] = [pivots.iloc[i].Data, True, pivots.iloc[i].P3]
+#        elif not pivots.iloc[i].Alta and pivots.iloc[i+1].Alta:
+#            terminais.loc[i] = [pivots.iloc[i].Data, False, pivots.iloc[i].P3]
+#    terminais.reset_index(inplace=True, drop=True)
+#    return terminais, pivots, pontos
 
 
 def desenha_grafico(ticker, period='D'):
@@ -312,7 +338,7 @@ def desenha_grafico(ticker, period='D'):
         df = converte_base_dados(hist[ticker], period).iloc[-250:]
 
 
-    pontos = acha_terminais(df.dropna())
+    topos_terminais, fundos_terminais, topos, fundos = acha_terminais(df.dropna())
 
 
     # Create a ColumnDataSource from df: source
@@ -325,14 +351,17 @@ def desenha_grafico(ticker, period='D'):
     p.vbar(x="Date", width=w, top="Close", bottom="Open", fill_color="#00FF00", line_color="black", source=inc)
     p.vbar(x="Date", width=w, top="Open", bottom="Close", fill_color="#FF0000", line_color="black", source=dec)
 
-#    p.circle(x=pontos[pontos['Classe'] == 'topo'].Data, y=pontos[pontos['Classe'] == 'topo'].Valor, size=10,
-#             color='blue')
-#    p.circle(x=pontos[pontos['Classe'] == 'fundo'].Data, y=pontos[pontos['Classe'] == 'fundo'].Valor, size=10,
-#             color='yellow')
-#    p.circle(x=pontos[pontos['Terminal_alta'] == True].Data, y=pontos[pontos['Terminal_alta'] == 'topo-terminal'].Valor, size=10,
-#             color='green')
-#    p.circle(x=pontos[pontos['TendCP'] == 'fundo-terminal'].Data, y=pontos[pontos['TendCP'] == 'fundo-terminal'].Valor, size=10,
-#             color='red')
+# Marca topos no gráfico
+    p.circle(x=topos.Data, y=topos.Valor, size=7, color='forestgreen')
+    p.circle(x=fundos.Data, y=fundos.Valor, size=7, color='orangered')
+
+# Marca pivots no gráfico
+#    p.circle(x=pivots[pivots['Alta'] == True].Data, y=pivots[pivots['Alta'] == True].P3, size=10, color='blue')
+#    p.circle(x=pivots[pivots['Alta'] == False].Data, y=pivots[pivots['Alta'] == False].P3, size=10, color='yellow')
+
+# Marca terminais no gráfico
+    p.circle(x=topos_terminais.Data, y=topos_terminais.Valor, size=10, color='lime')
+    p.circle(x=fundos_terminais.Data, y=fundos_terminais.Valor, size=10, color='red')
 
     # min250 = petr3.Low.min()
     # suporte = np.full((250,), min250)
