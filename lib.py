@@ -268,8 +268,25 @@ def acha_pivots(df):
     pivots.reset_index(inplace=True)
     return pivots
 
-
-
+def acha_terminais(df):
+    '''
+    Localiza os pontos terminais de uma tendência de uma série temporal do Yahoo Finanças.
+    :param df: Recebe um dataframe com a data como índice e os valores Open, Close, High, Low, Adj. Close
+    :return: Dataframe com a sequência de topos e fundos terminais com as seguintes informações:
+    Data: Data do ponto em questão.
+    Terminal_alta: True para ponto terminal de alta ou False para ponto terminal de baixa.
+    Valor: Valor do ativo na data.
+    '''
+    pivots = acha_pivots(df)
+    terminais = pd.DataFrame(columns=['Data', 'Terminal_alta', 'Valor'])
+    for i in range(0, len(pivots)-1):
+        if pivots.iloc[i].Alta and not pivots.iloc[i+1].Alta:
+            terminais.iloc[i] = [pivots.iloc[i].Data, True, pivots.iloc[i].P3]
+        elif not pivots.iloc[i].Alta and pivots.iloc[i+1].Alta:
+            terminais.iloc[i] = [pivots.iloc[i].Data, False, pivots.iloc[i].P3]
+    terminais.reset_index(inplace=True)
+    return terminais
+            
 
 def desenha_grafico(ticker, period='D'):
     from bokeh.plotting import figure, output_file, show, ColumnDataSource
