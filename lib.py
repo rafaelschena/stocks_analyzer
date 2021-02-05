@@ -230,91 +230,22 @@ def inclui_ativo(ticker):
         print('Lista de ativos atualizada.')
 
 def acha_topo_e_fundo(df):
-    pontos = pd.DataFrame(columns=['Data', 'Valor', 'Classe', 'TendCP'])
+    '''
+    Localiza os topos e fundos locais de uma série temporal do Yahoo Finanças.
+    :param df: Recebe um dataframe com a data como índice e os valores Open, Close, High, Low, Adj. Close
+    :return: Retorna um dataframe com a sequência de topos e fundos com colunas Data, Valor, Topo (True para
+    topo, False para fundo)
+    '''
+    pontos = pd.DataFrame(columns=['Data', 'Valor', 'Topo'])
     for i in range(1, len(df.High)-1):
         if df.High[i] > df.High[i-1] and df.High[i] > df.High[i+1]:
-            pontos.loc[i] = [df.High.index[i], df.High[i], 'topo', '-']
+            pontos.loc[i] = [df.High.index[i], df.High[i], True]
         if df.Low[i] < df.Low[i-1] and df.Low[i] < df.Low[i+1]:
-            pontos.loc[i] = [df.Low.index[i], df.Low[i], 'fundo', '-']
+            pontos.loc[i] = [df.Low.index[i], df.Low[i], False]
 
-    # Lógica para encontrar os topos terminais
-    # Ideia para reformular a lógica: fazer uma varredura desde o início, verificar se o topo rompeu o último
-    # suporte ou a última resistência, guardar em uma lista, depois gravar no dataframe.
-    for k in range(1, len(pontos)-2):
-        # Encontrando primeiro fundo anterior
-        aux = k-1
-        while pontos.iloc[aux].Classe != "fundo":
-            aux -= 1
-        f_menos_1 = pontos.iloc[aux].Valor
-
-        # Encontrando primeiro topo anterior
-        aux = k-1
-        while pontos.iloc[aux].Classe != "topo":
-            aux -= 1
-        t_menos_1 = pontos.iloc[aux].Valor
-
-        # Encontrando primeiro topo posterior
-        aux = k+1
-        while pontos.iloc[aux].Classe != "topo":
-            aux += 1
-        t_mais_1 = pontos.iloc[aux].Valor
-
-        # Encontrando os próximos 2 fundos
-        aux = k+1
-        f_mais = []
-        while len(f_mais) < 2 and aux < len(pontos):
-            if pontos.iloc[aux].Classe == "fundo":
-               f_mais.append(pontos.iloc[aux].Valor)
-            aux += 1
-
-        if (t_menos_1 < pontos.iloc[k].Valor > t_mais_1) and (f_mais[0] < f_menos_1 or f_mais[1] < f_mais[0]):
-            pontos.TendCP.iat[k] = "topo-terminal"
-
-    # Lógica para encontrar os fundos terminais
-    for n in range(1, len(pontos) - 2):
-        # Encontrando primeiro fundo anterior
-        aux = n - 1
-        while pontos.iloc[aux].Classe != "fundo":
-            aux -= 1
-        f_menos_1 = pontos.iloc[aux].Valor
-
-        # Encontrando primeiro topo anterior
-        aux = n - 1
-        while pontos.iloc[aux].Classe != "topo":
-            aux -= 1
-        t_menos_1 = pontos.iloc[aux].Valor
-
-        # Encontrando primeiro fundo posterior
-        aux = n + 1
-        while pontos.iloc[aux].Classe != "fundo":
-            aux += 1
-        f_mais_1 = pontos.iloc[aux].Valor
-
-        # Encontrando os próximos 2 topos
-        aux = n + 1
-        t_mais = []
-        while len(f_mais) < 2 and aux < len(pontos):
-            if pontos.iloc[aux].Classe == "topo":
-                t_mais.append(pontos.iloc[aux].Valor)
-            aux += 1
-
-        if (f_menos_1 > pontos.iloc[n].Valor < f_mais_1) and (t_mais[0] > t_menos_1 or t_mais[1] > t_mais[0]):
-            pontos.TendCP.iat[n] = "fundo-terminal"
-
-
-#    topos = pontos[pontos['Classe'] == 'topo']
-#    fundos = pontos[pontos['Classe'] == 'fundo']
-
-#    for j in range(1, len(topos) - 1):
-#        if topos.iloc[j - 1].Valor < topos.iloc[j].Valor > topos.iloc[j + 1].Valor:
-#            topos.TendCP.iat[j] = "topo-terminal"
-
-#    for k in range(1, len(fundos) - 1):
-#        if fundos.iloc[k - 1].Valor > fundos.iloc[k].Valor < fundos.iloc[k + 1].Valor:
-#            fundos.TendCP.iat[k] = "fundo-terminal"
-
-#    pontos = pd.concat([topos, fundos])
     return pontos
+
+
 
 def desenha_grafico(ticker, period='D'):
     from bokeh.plotting import figure, output_file, show, ColumnDataSource
@@ -353,14 +284,14 @@ def desenha_grafico(ticker, period='D'):
     p.vbar(x="Date", width=w, top="Close", bottom="Open", fill_color="#00FF00", line_color="black", source=inc)
     p.vbar(x="Date", width=w, top="Open", bottom="Close", fill_color="#FF0000", line_color="black", source=dec)
 
-#    p.circle(x=pontos[pontos['Classe'] == 'topo'].Data, y=pontos[pontos['Classe'] == 'topo'].Valor, size=10,
-#             color='blue')
-#    p.circle(x=pontos[pontos['Classe'] == 'fundo'].Data, y=pontos[pontos['Classe'] == 'fundo'].Valor, size=10,
-#             color='yellow')
-    p.circle(x=pontos[pontos['TendCP'] == 'topo-terminal'].Data, y=pontos[pontos['TendCP'] == 'topo-terminal'].Valor, size=10,
-             color='green')
-    p.circle(x=pontos[pontos['TendCP'] == 'fundo-terminal'].Data, y=pontos[pontos['TendCP'] == 'fundo-terminal'].Valor, size=10,
-             color='red')
+    p.circle(x=pontos[pontos['Classe'] == 'topo'].Data, y=pontos[pontos['Classe'] == 'topo'].Valor, size=10,
+             color='blue')
+    p.circle(x=pontos[pontos['Classe'] == 'fundo'].Data, y=pontos[pontos['Classe'] == 'fundo'].Valor, size=10,
+             color='yellow')
+#    p.circle(x=pontos[pontos['TendCP'] == 'topo-terminal'].Data, y=pontos[pontos['TendCP'] == 'topo-terminal'].Valor, size=10,
+#             color='green')
+#    p.circle(x=pontos[pontos['TendCP'] == 'fundo-terminal'].Data, y=pontos[pontos['TendCP'] == 'fundo-terminal'].Valor, size=10,
+#             color='red')
 
     # min250 = petr3.Low.min()
     # suporte = np.full((250,), min250)
