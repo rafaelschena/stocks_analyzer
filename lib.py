@@ -242,7 +242,7 @@ def acha_topo_e_fundo(df):
             pontos.loc[i] = [df.High.index[i], df.High[i], True]
         if df.Low[i] < df.Low[i-1] and df.Low[i] < df.Low[i+1]:
             pontos.loc[i] = [df.Low.index[i], df.Low[i], False]
-    pontos.reset_index(inplace=True)
+    pontos.reset_index(inplace=True, drop=True)
     return pontos
 
 def acha_pivots(df):
@@ -265,7 +265,7 @@ def acha_pivots(df):
         else:
             if pontos.iloc[i-1].Topo and (not pontos.iloc[i-2].Topo) and (pontos.iloc[i].Valor < pontos.iloc[i-2].Valor):
                 pivots.loc[i] = [pontos.iloc[i].Data, False, pontos.iloc[i].Valor, pontos.iloc[i-1].Valor, pontos.iloc[i-2].Valor]
-    pivots.reset_index(inplace=True)
+    pivots.reset_index(inplace=True, drop=True)
     return pivots
 
 def acha_terminais(df):
@@ -281,12 +281,12 @@ def acha_terminais(df):
     terminais = pd.DataFrame(columns=['Data', 'Terminal_alta', 'Valor'])
     for i in range(0, len(pivots)-1):
         if pivots.iloc[i].Alta and not pivots.iloc[i+1].Alta:
-            terminais.iloc[i] = [pivots.iloc[i].Data, True, pivots.iloc[i].P3]
+            terminais.loc[i] = [pivots.iloc[i].Data, True, pivots.iloc[i].P3]
         elif not pivots.iloc[i].Alta and pivots.iloc[i+1].Alta:
-            terminais.iloc[i] = [pivots.iloc[i].Data, False, pivots.iloc[i].P3]
-    terminais.reset_index(inplace=True)
+            terminais.loc[i] = [pivots.iloc[i].Data, False, pivots.iloc[i].P3]
+    terminais.reset_index(inplace=True, drop=True)
     return terminais
-            
+
 
 def desenha_grafico(ticker, period='D'):
     from bokeh.plotting import figure, output_file, show, ColumnDataSource
@@ -312,7 +312,7 @@ def desenha_grafico(ticker, period='D'):
         df = converte_base_dados(hist[ticker], period).iloc[-250:]
 
 
-    pontos = acha_topo_e_fundo(df.dropna())
+    pontos = acha_terminais(df.dropna())
 
 
     # Create a ColumnDataSource from df: source
@@ -325,11 +325,11 @@ def desenha_grafico(ticker, period='D'):
     p.vbar(x="Date", width=w, top="Close", bottom="Open", fill_color="#00FF00", line_color="black", source=inc)
     p.vbar(x="Date", width=w, top="Open", bottom="Close", fill_color="#FF0000", line_color="black", source=dec)
 
-    p.circle(x=pontos[pontos['Classe'] == 'topo'].Data, y=pontos[pontos['Classe'] == 'topo'].Valor, size=10,
-             color='blue')
-    p.circle(x=pontos[pontos['Classe'] == 'fundo'].Data, y=pontos[pontos['Classe'] == 'fundo'].Valor, size=10,
-             color='yellow')
-#    p.circle(x=pontos[pontos['TendCP'] == 'topo-terminal'].Data, y=pontos[pontos['TendCP'] == 'topo-terminal'].Valor, size=10,
+#    p.circle(x=pontos[pontos['Classe'] == 'topo'].Data, y=pontos[pontos['Classe'] == 'topo'].Valor, size=10,
+#             color='blue')
+#    p.circle(x=pontos[pontos['Classe'] == 'fundo'].Data, y=pontos[pontos['Classe'] == 'fundo'].Valor, size=10,
+#             color='yellow')
+#    p.circle(x=pontos[pontos['Terminal_alta'] == True].Data, y=pontos[pontos['Terminal_alta'] == 'topo-terminal'].Valor, size=10,
 #             color='green')
 #    p.circle(x=pontos[pontos['TendCP'] == 'fundo-terminal'].Data, y=pontos[pontos['TendCP'] == 'fundo-terminal'].Valor, size=10,
 #             color='red')
