@@ -242,8 +242,32 @@ def acha_topo_e_fundo(df):
             pontos.loc[i] = [df.High.index[i], df.High[i], True]
         if df.Low[i] < df.Low[i-1] and df.Low[i] < df.Low[i+1]:
             pontos.loc[i] = [df.Low.index[i], df.Low[i], False]
-
+    pontos.reset_index(inplace=True)
     return pontos
+
+def acha_pivots(df):
+    '''
+    Localiza os pivots de alta e baixa de uma série temporal do Yahoo Finanças.
+    :param df: Recebe um dataframe com a data como índice e os valores Open, Close, High, Low, Adj. Close
+    :return: Dataframe com a sequência de pivots de alta ou baixa com as seguintes informações:
+    Data: data do ponto 3 do pivot
+    Alta: True para pivot de alta, False para pivot de baixa.
+    P3: valor do ativo no ponto 2 do pivot
+    P2: valor do ativo no ponto 2 do pivot
+    P1: valor do ativo no ponto 1 do pivot
+    '''
+    pontos = acha_topo_e_fundo(df)
+    pivots = pd.DataFrame(columns=['Data', 'Alta', 'P3', 'P2', 'P1'])
+    for i in range(2, len(pontos)):
+        if pontos.iloc[i].Topo:
+            if (not pontos.iloc[i-1].Topo) and pontos.iloc[i-2].Topo and (pontos.iloc[i].Valor > pontos.iloc[i-2].Valor):
+                pivots.loc[i] = [pontos.iloc[i].Data, True, pontos.iloc[i].Valor, pontos.iloc[i-1].Valor, pontos.iloc[i-2].Valor]
+        else:
+            if pontos.iloc[i-1].Topo and (not pontos.iloc[i-2].Topo) and (pontos.iloc[i].Valor < pontos.iloc[i-2].Valor):
+                pivots.loc[i] = [pontos.iloc[i].Data, False, pontos.iloc[i].Valor, pontos.iloc[i-1].Valor, pontos.iloc[i-2].Valor]
+    pivots.reset_index(inplace=True)
+    return pivots
+
 
 
 
